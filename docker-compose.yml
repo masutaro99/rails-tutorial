@@ -1,0 +1,45 @@
+version: "3"
+
+volumes:
+  db_data:
+  sockets:
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/rails/Dockerfile
+    # command: bundle exec puma -C config/puma.rb
+    ports:
+      - "3000:3000"
+    volumes:
+      # ローカルのカレントディレクトリとコンテナ内のappディレクトリを結びつける
+      - .:/app
+      - /var/tmp
+      # socketファイルの共有
+      - sockets:/app/tmp/sockets
+    tty: true
+    depends_on:
+      - db
+    environment:
+      - "DB_PASSWORD=postgres"
+  db:
+    image: postgres
+    environment:
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    volumes:
+      - "./db-data:/var/lib/postgresql/data"
+
+  # nginx:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/nginx/Dockerfile
+  #   ports:
+  #     - "80:80"
+  #     #socketファイルの共有
+  #   volumes:
+  #     - sockets:/app/tmp/sockets
+  #   depends_on:
+  #     - app
